@@ -1,1 +1,23 @@
-spring.application.name=CatConnect
+spring:
+  application:
+    name: CatConnect
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/connect?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: catconnect_user
+    password: StrongPass#123
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  session:
+    store-type: jdbc
+    jdbc:
+      initialize-schema: never
+      table-name: SPRING_SESSION
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  flyway:
+    baseline-on-migrate: true   # ?? create flyway_schema_history for current DB state
+    baseline-version: 0         # ?? mark current schema as version 0 (optional but clear)
