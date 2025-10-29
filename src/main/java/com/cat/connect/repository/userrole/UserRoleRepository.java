@@ -1,7 +1,7 @@
 // src/main/java/com/cat/connect/repository/userrole/UserRoleRepository.java
 package com.cat.connect.repository.userrole;
 
-import com.cat.connect.dto.UserRoleResponse;
+import com.cat.connect.dto.user.UserRoleResponse;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;

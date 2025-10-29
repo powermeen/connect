@@ -2,7 +2,7 @@
 package com.cat.connect.controller;
 
 
-import com.cat.connect.dto.UserRoleResponse;
+import com.cat.connect.dto.user.UserRoleResponse;
 import com.cat.connect.service.UserRoleService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;

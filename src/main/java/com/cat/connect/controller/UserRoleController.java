@@ -1,9 +1,9 @@
 // src/main/java/com/cat/connect/controller/UserRoleController.java
 package com.cat.connect.controller;
 
-import com.cat.connect.dto.UserRoleRequest;
-import com.cat.connect.dto.UserRoleResponse;
-import com.cat.connect.dto.UserRoleUpdateRequest;
+import com.cat.connect.dto.user.UserRoleRequest;
+import com.cat.connect.dto.user.UserRoleResponse;
+import com.cat.connect.dto.user.UserRoleUpdateRequest;
 import com.cat.connect.service.UserRoleService;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;

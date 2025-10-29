@@ -1,7 +1,7 @@
 // src/main/java/com/cat/connect/service/UserRoleService.java
 package com.cat.connect.service;
 
-import com.cat.connect.dto.UserRoleResponse;
+import com.cat.connect.dto.user.UserRoleResponse;
 import com.cat.connect.repository.userrole.UserRoleRepository;
 import com.cat.connect.tenant.TenantContext;
 import org.springframework.dao.DuplicateKeyException;
