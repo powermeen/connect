@@ -1,5 +1,5 @@
-package com.cat.connect.controller;// src/main/java/com/cat/connect/userrole/UserRoleController.java
-
+// src/main/java/com/cat/connect/controller/UserRoleController.java
+package com.cat.connect.controller;
 
 import com.cat.connect.dto.UserRoleRequest;
 import com.cat.connect.dto.UserRoleResponse;
@@ -23,9 +23,12 @@ public class UserRoleController {
         this.service = service;
     }
 
-    // Create mapping
+    // Create mapping (companyId is taken from TenantContext inside the service)
     @PostMapping
     public ResponseEntity<?> create(@RequestBody UserRoleRequest req) {
+        if (req == null) {
+            return ResponseEntity.badRequest().body("Request body is required");
+        }
         try {
             service.add(req.userId(), req.roleId());
             return ResponseEntity
@@ -34,10 +37,13 @@ public class UserRoleController {
         } catch (DuplicateKeyException e) {
             return ResponseEntity.status(409)
                     .body("Mapping already exists for userId=%d roleId=%d".formatted(req.userId(), req.roleId()));
+        } catch (IllegalArgumentException e) {
+            // e.g. userId/roleId not found within this tenant
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    // Read list (optionally filter by userId or roleId)
+    // Read list (optionally filter by userId or roleId), scoped by TenantContext
     @GetMapping
     public List<UserRoleResponse> list(@RequestParam Optional<Long> userId,
                                        @RequestParam Optional<Long> roleId) {
@@ -46,7 +52,7 @@ public class UserRoleController {
         return service.listAll();
     }
 
-    // Delete mapping
+    // Delete mapping within current tenant
     @DeleteMapping("/{userId}/{roleId}")
     public ResponseEntity<?> delete(@PathVariable long userId, @PathVariable long roleId) {
         int rows = service.remove(userId, roleId);
@@ -54,7 +60,7 @@ public class UserRoleController {
                 : ResponseEntity.notFound().build();
     }
 
-    // Update mapping: change role for a user (old -> new)
+    // Update mapping: change role for a user (old -> new) within current tenant
     @PutMapping("/{userId}/{oldRoleId}")
     public ResponseEntity<?> update(@PathVariable long userId,
                                     @PathVariable long oldRoleId,
@@ -66,10 +72,11 @@ public class UserRoleController {
             service.changeRole(userId, oldRoleId, body.newRoleId());
             return ResponseEntity.ok(new UserRoleResponse(userId, body.newRoleId()));
         } catch (DuplicateKeyException e) {
-            // new mapping already exists
             return ResponseEntity.status(409)
                     .body("Mapping already exists for userId=%d roleId=%d"
                             .formatted(userId, body.newRoleId()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 }

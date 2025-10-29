@@ -1,4 +1,4 @@
-// src/main/java/com/cat/connect/userrole/UserRoleRepository.java
+// src/main/java/com/cat/connect/repository/userrole/UserRoleRepository.java
 package com.cat.connect.repository.userrole;
 
 import com.cat.connect.dto.UserRoleResponse;
@@ -11,6 +11,7 @@ import java.util.List;
 
 @Repository
 public class UserRoleRepository {
+
     private final JdbcTemplate jdbc;
 
     public UserRoleRepository(JdbcTemplate jdbc) {
@@ -20,31 +21,77 @@ public class UserRoleRepository {
     private static final RowMapper<UserRoleResponse> MAPPER = (rs, i) ->
             new UserRoleResponse(rs.getLong("user_id"), rs.getLong("role_id"));
 
-    public int insert(long userId, long roleId) throws DuplicateKeyException {
-        // PK(user_id, role_id) avoids duplicates; DuplicateKeyException if already exists
-        return jdbc.update("INSERT INTO user_role (user_id, role_id) VALUES (?, ?)", userId, roleId);
+    // ---------- CRUD (scoped by company_id) ----------
+
+    /** Insert mapping for a tenant (PK: company_id, user_id, role_id). */
+    public int insert(long companyId, long userId, long roleId) throws DuplicateKeyException {
+        return jdbc.update(
+                "INSERT INTO user_role (company_id, user_id, role_id) VALUES (?, ?, ?)",
+                companyId, userId, roleId
+        );
     }
 
-    public List<UserRoleResponse> findAll() {
-        return jdbc.query("SELECT user_id, role_id FROM user_role ORDER BY user_id, role_id", MAPPER);
+    /** List all mappings for a tenant. */
+    public List<UserRoleResponse> findAll(long companyId) {
+        return jdbc.query(
+                "SELECT user_id, role_id FROM user_role " +
+                        "WHERE company_id = ? ORDER BY user_id, role_id",
+                MAPPER, companyId
+        );
     }
 
-    public List<UserRoleResponse> findByUserId(long userId) {
-        return jdbc.query("SELECT user_id, role_id FROM user_role WHERE user_id = ? ORDER BY role_id", MAPPER, userId);
+    /** List mappings by user within a tenant. */
+    public List<UserRoleResponse> findByUserId(long companyId, long userId) {
+        return jdbc.query(
+                "SELECT user_id, role_id FROM user_role " +
+                        "WHERE company_id = ? AND user_id = ? ORDER BY role_id",
+                MAPPER, companyId, userId
+        );
     }
 
-    public List<UserRoleResponse> findByRoleId(long roleId) {
-        return jdbc.query("SELECT user_id, role_id FROM user_role WHERE role_id = ? ORDER BY user_id", MAPPER, roleId);
+    /** List mappings by role within a tenant. */
+    public List<UserRoleResponse> findByRoleId(long companyId, long roleId) {
+        return jdbc.query(
+                "SELECT user_id, role_id FROM user_role " +
+                        "WHERE company_id = ? AND role_id = ? ORDER BY user_id",
+                MAPPER, companyId, roleId
+        );
     }
 
-    public boolean exists(long userId, long roleId) {
+    /** Check mapping existence within a tenant. */
+    public boolean exists(long companyId, long userId, long roleId) {
         Integer n = jdbc.queryForObject(
-                "SELECT COUNT(*) FROM user_role WHERE user_id = ? AND role_id = ?",
-                Integer.class, userId, roleId);
+                "SELECT COUNT(*) FROM user_role WHERE company_id = ? AND user_id = ? AND role_id = ?",
+                Integer.class, companyId, userId, roleId
+        );
         return n != null && n > 0;
     }
 
-    public int delete(long userId, long roleId) {
-        return jdbc.update("DELETE FROM user_role WHERE user_id = ? AND role_id = ?", userId, roleId);
+    /** Delete mapping within a tenant. */
+    public int delete(long companyId, long userId, long roleId) {
+        return jdbc.update(
+                "DELETE FROM user_role WHERE company_id = ? AND user_id = ? AND role_id = ?",
+                companyId, userId, roleId
+        );
+    }
+
+    // ---------- Parent existence checks (tenant-safe) ----------
+
+    /** app_user must exist in the same company. */
+    public boolean userExists(long companyId, long userId) {
+        Integer n = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM app_user WHERE company_id = ? AND id = ?",
+                Integer.class, companyId, userId
+        );
+        return n != null && n > 0;
+    }
+
+    /** role must exist in the same company. */
+    public boolean roleExists(long companyId, long roleId) {
+        Integer n = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM role WHERE company_id = ? AND id = ?",
+                Integer.class, companyId, roleId
+        );
+        return n != null && n > 0;
     }
 }
